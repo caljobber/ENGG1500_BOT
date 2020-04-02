@@ -12,7 +12,7 @@ PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
 
 double CountsPerSecond = ((enc_getLeft())/timeElapsed)*1000;
 
-double motorSpeed = CountsPerSecond * 18.34;
+double motorSpeed = CountsPerSecond * 91.7;
 
 void setup() {
   Input = motorSpeed;
