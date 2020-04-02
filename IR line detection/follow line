@@ -63,10 +63,10 @@ void setup() {//need to initialise other IR sensors
     //need to read the values from each sensor and initialise them as w1,w2,w3,w4
     void loop(){
     xline = ((w1*x1 + w2*x2 + w3*x3 + w4*x4)/(w1 + w2 + w3 + w4))
-    linediff = xline;//this could be positive or negative, depending on what side line is of centre
-    delaytime = linediff/10;/*this may need to be tweaked to work better as results come in. Just a number for 
+    linediff = xline;       //this could be positive or negative, depending on what side line is of centre
+    delaytime = linediff/10;        /*this may need to be tweaked to work better as results come in. Just a number for 
     the moment*/
-    float turn(void)//input turn function
+    float turn(void)        //input turn function
     /* the idea is that the turn function has a degree of difference so say the left wheel turns by x 
     and the right wheel turns by y. now there is a difference of a between x and y. that difference 
     is determined by the value of linediff. So the further the line is left the greater the difference 
@@ -74,7 +74,7 @@ void setup() {//need to initialise other IR sensors
     this means that the car will turn steeper when it is further off centre and not leave the track.*/
     /* turn function should look something like */
     
-    if(xline<-3){
+    if(xline<-7){           //If line is far left of centre (>7mm) turn left
         leftBackwards();
         rightForwards();
         delay(delaytime);
@@ -82,12 +82,23 @@ void setup() {//need to initialise other IR sensors
         should also get smaller as the line gets closer to the centre of the robot so that it doesn't zig zag
         aggressively but drives smoothly*/
     }
-    else if(xline>3){
+    else if(xline>7){           //If line is far right of centre (>7mm) turn right
         leftForwards();
         rightBackwards();
         delay(delaytime);
     }
-    else if(-3<=xline<=3){
+    /*wanting to be able to vary wheel speeds for these
+    
+    else if(-3>xline=>-7){      //If line is 3-7mm left of centre turn right and forwards
+        right forwards;
+        left forwards;     //this one with more power
+    }
+    else if(3<xline<=7){        //If line is right 3-7 mm from the centre turn left and forwards
+        right forwards;    //this one with more power than left
+        left forwards;
+        
+    } */
+    else if(-3<=xline<=3){      //if its within 3 mm either side of the vehicle centre drive straight
         leftForwards();
         rightForwards();
         delay();
