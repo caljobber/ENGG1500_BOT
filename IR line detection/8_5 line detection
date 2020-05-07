@@ -1,0 +1,66 @@
+#include <stdio.h>
+#include <ENGG1500Lib.h>
+float IRS1=A3;//left to right of bot
+float IRS2=A2;
+float IRS3=A1;
+float IRS4=A0;
+
+
+  float i1 = 0;
+  float i2 = 0;
+  float i3 = 0;
+  float i4 = 0;
+  float lineposition(void);
+  float x1 = 22 , x2 = 7, x3 = -7, x4 = -22;//measurements in mm
+  float xline;
+  float linediff;
+  float delaytime;
+  float array[5] = {0};
+  float sum;
+  int i;
+//START
+void setup() {//need to initialise other IR sensors
+  // put your setup code here, to run once:
+  pinMode(5,OUTPUT); //set ENA as an output
+  pinMode(6,OUTPUT); //set ENB as an output
+  pinMode(8,OUTPUT); //set IN1 as an output
+  pinMode(9,OUTPUT); //set IN2 as an output
+  pinMode(10,OUTPUT); //set IN3 as an output
+  pinMode(11,OUTPUT); //set IN4 as an output
+  Serial.begin(9600);
+}
+
+void loop(){
+    i1 = analogRead(IRS1); //Gather values for 4 IR sensors
+    i2 = analogRead(IRS2);
+    i3 = analogRead(IRS3);
+    i4 = analogRead(IRS4);
+    //Serial.println(i1);
+    //Serial.println(i2);
+    //Serial.println(i3);
+    //Serial.println(i4);
+    //Serial.println("segment");
+    delay (1000);
+    sum = 0;
+    lineposition();
+    
+}
+        
+        
+  float lineposition(void){
+    //need to read the values from each sensor and initialise them as w1,w2,w3,w4
+
+        xline = ((i1*x1 + i2*x2 + i3*x3 + i4*x4)/(i1 + i2 + i3 + i4));
+        array[0]= array[1];
+        array[1]= array[2];
+        array[2]= array[3];
+        array[3]= array[4];
+        array[4]= xline;
+        //Serial.println(xline);
+        for(i=0;i<5;i++){//sum the 5 elements in the array, this is the first case
+        sum+= array[i];
+        //Serial.println(sum);
+        }
+        sum/=5;
+        Serial.println(sum); 
+}
