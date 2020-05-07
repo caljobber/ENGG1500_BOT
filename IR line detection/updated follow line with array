@@ -11,6 +11,7 @@ const int IRS4=A0;
   int i2 = 0;
   int i3 = 0;
   int i4 = 0;
+  float length;
   /* the next set of initialisations is for the calculation and function for
   detecting line position
   */
@@ -19,7 +20,7 @@ const int IRS4=A0;
     float xline;
     float linediff;
     float delaytime;
-    float array[5];
+    char array[5];
     float sum;
     int i;
 //START
@@ -32,8 +33,7 @@ void setup() {//need to initialise other IR sensors
   pinMode(10,OUTPUT); //set IN3 as an output
   pinMode(11,OUTPUT); //set IN4 as an output
   Serial.begin(9600);
-  
-  delay(5000);//delay before starting loop
+  sum = 0;
 }
 
 void loop(){
@@ -41,40 +41,27 @@ void loop(){
     i2 = analogRead(IRS2);
     i3 = analogRead(IRS3);
     i4 = analogRead(IRS4);
-    Serial.println(i1);
-    Serial.println(i2);
-    Serial.println(i3);
-    Serial.println(i4);
-        lineposition(void);
+    ///Serial.println(i1);
+    ///Serial.println(i2);
+    ///Serial.println(i3);
+    ///Serial.println(i4);
+    
+    lineposition();
+    Serial.println(sum);
 }
         
         
   float lineposition(void){
     //need to read the values from each sensor and initialise them as w1,w2,w3,w4
-    void loop(){
-        length = strlen(array);//should always be 5
-    for(i=0;i<5;i++){//put 5 elements in the array
-        xline = ((i1*x1 + i2*x2 + i3*x3 + i4*x4)/(i1 + i2 + i3 + i4));
-        array[i] = xline;
-    }
-    for(i=0;i<5;i++){//sum the 5 elements in the array, this is the first case
-        sum+= array[i];
-    }
-    Serial.println(sum);
-    //need a continuous loop
-    while(5=5){
-    if(length==5){
+        
         xline = ((i1*x1 + i2*x2 + i3*x3 + i4*x4)/(i1 + i2 + i3 + i4));
         array[1]=array[2];
         array[2]=array[3];
         array[3]=array[4];
         array[4]=array[5];
         array[5]=xline;
-            for(i=0;i<5;i++){//sum the 5 elements in the array, this is the first case
-            sum+= array[i];
-            } 
-            Serial.println(sum); 
-        }
-    }
+        for(i=0;i<5;i++){//sum the 5 elements in the array, this is the first case
+        sum+= array[i];
+        //Serial.println(sum);
+        } 
 }
-    
