@@ -26,20 +26,20 @@ void loop() {
 val = angles[i];
 digitalWrite(trigPin, HIGH);
 myservo.write(val);                  // sets the servo position according to the scaled value
-  delay(800);  
+  delay(800);
+  analogWrite(5, 150);
+  analogWrite(6, 150);  
   duration = pulseIn(echoPin, HIGH);
   distance = duration * 0.034 / 2;
   Serial.print(distance);
   Serial.println(" cm");
   if (distance > 5 && distance < 30) {
-    analogWrite(5, 130);
-    analogWrite(6, 150);
+    analogWrite(5, 150);
+    analogWrite(6, 170);
   }
   else if (distance < 5){
-    analogWrite(5, 150);
-    analogWrite(6, 130);
+    analogWrite(5, 170);
+    analogWrite(6, 150);
   }
-  else {
-    
-  }
+
 }
