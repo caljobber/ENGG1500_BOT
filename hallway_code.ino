@@ -44,11 +44,11 @@ void loop() {
 
   Serial.print(mm);
   
-  if (distance > 50 && distance < 300) {
+  while (distance > 50 && distance < 300) {
     analogWrite(5, 150);
     analogWrite(6, 170);
     }
-  else if (distance < 50){
+  while (distance < 50){
     analogWrite(5, 170);
     analogWrite(6, 150);
     }
