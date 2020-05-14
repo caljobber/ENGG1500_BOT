@@ -19,15 +19,15 @@ void setup() {
   int val;    // variable to read the value from the analog pin
 
 
-unsigned int sonar_mm(void){
-long duration = 0;
-const float speed_sound = 340.29;
-digitalWrite(TRIG, HIGH);
-delayMicroseconds(10);
-digitalWrite(TRIG, LOW);
-duration = pulseIn(ECHO, HIGH); 
-return (unsigned int)(0.5 * duration * 1e-6 * speed_sound * 1e3);
-}
+  unsigned int sonar_mm(void){
+  long duration = 0;
+  const float speed_sound = 340.29;
+  digitalWrite(TRIG, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIG, LOW);
+  duration = pulseIn(ECHO, HIGH); 
+  return (unsigned int)(0.5 * duration * 1e-6 * speed_sound * 1e3);
+  }
 
 void loop() {
   
@@ -40,15 +40,14 @@ void loop() {
   unsigned int distance_mm = 0;
   distance_mm = sonar_mm();
   unsigned int mm = sonar_mm();
-  if(mm < 150)
 
   Serial.print(mm);
   
-  while (distance > 50 && distance < 300) {
+  while (mm > 50 && mm < 300) {
     analogWrite(5, 150);
     analogWrite(6, 170);
     }
-  while (distance < 50){
+  while (mm < 50){
     analogWrite(5, 170);
     analogWrite(6, 150);
     }
