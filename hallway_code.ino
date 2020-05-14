@@ -15,10 +15,19 @@ void setup() {
 }
   int angles[] = {0, 90}; 
   int i = 0;
-  long duration;
   int distance;
   int val;    // variable to read the value from the analog pin
 
+
+unsigned int sonar_mm(void){
+long duration = 0;
+const float speed_sound = 340.29;
+digitalWrite(TRIG, HIGH);
+delayMicroseconds(10);
+digitalWrite(TRIG, LOW);
+duration = pulseIn(ECHO, HIGH); 
+return (unsigned int)(0.5 * duration * 1e-6 * speed_sound * 1e3);
+}
 
 void loop() {
   
@@ -27,23 +36,19 @@ void loop() {
   myservo.write(val);
   analogWrite(5, 150);
   analogWrite(6, 150); 
-  
-  digitalWrite(trigPin, LOW);
-  delayMicroseconds(2);
-  digitalWrite(trigPin, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(trigPin, LOW);
 
-  duration = pulseIn(echoPin, HIGH);
-  distance = duration * 0.034 / 2;
-  Serial.print(distance);
-  Serial.println(" cm");
+  unsigned int distance_mm = 0;
+  distance_mm = sonar_mm();
+  unsigned int mm = sonar_mm();
+  if(mm < 150)
+
+  Serial.print(mm);
   
-  if (distance > 5 && distance < 30) {
+  if (distance > 50 && distance < 300) {
     analogWrite(5, 150);
     analogWrite(6, 170);
     }
-  else if (distance < 5){
+  else if (distance < 50){
     analogWrite(5, 170);
     analogWrite(6, 150);
     }
