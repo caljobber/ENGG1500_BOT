@@ -1,36 +1,120 @@
-void setup() {
-  #include <stdio.h>
-  #include <ENGG1500Lib.h>
-  #define ENA 5
-  #define ENB 6
-  #define IN1 8
-  #define IN2 9
-  #define IN3 10
-  #define IN4 11
+#include <stdio.h>
+#include <ENGG1500Lib.h>
+#define ENA 5
+#define ENB 6
+#define IN1 8
+#define IN2 9
+#define IN3 10
+#define IN4 11
 
+float x1 = -22.5;
+float x2 = -7.5;
+float x3 = 7.5;
+float x4 = 22.5;
+float w1;
+float w2;
+float w3;
+float w4;
+
+float IRS1 = A3;//left to right of bot
+float IRS2 = A2;
+float IRS3 = A1;
+float IRS4 = A0;
+ 
+const float goal = 0; 
+float Ed = 0;
+float Kp = 4;
+float Kd = 18;
+float prevE = 0;
+float newE = 0;
+float linedist = 0; //taken from which ir sensor is active
+float den;
+float num;
+int i;
+const int maxarr = 5;
+float distarr[maxarr] = {0.0f};
+float ave = 0;
+/* 
+//========================================\\
+//THESE VALUES WERE 96 and 85 respectively\\
+//========================================\\
+ */
+
+float basevall = 88;
+float basevalr = 77;
+float limitl = 150; 
+float limitr = 120;
+float pwml, pwmr;
+  
+void setup(){
+  pinMode(A0, INPUT);
+  pinMode(A1, INPUT);
+  pinMode(A2, INPUT);
+  pinMode(A3, INPUT);
+  
   pinMode(ENA, OUTPUT); //set ENA as an output
   pinMode(ENB, OUTPUT); //set ENB as an output
   pinMode(IN1, OUTPUT); //set IN1 as an output
   pinMode(IN2, OUTPUT); //set IN2 as an output
   pinMode(IN3, OUTPUT); //set IN3 as an output
   pinMode(IN4, OUTPUT); //set IN4 as an output
+
+  Serial.begin(9600);
 }
 
-void loop() {
-  float pwml = 96;
-  float pwmr = 85;
+void loop(){
+  w1 = analogRead(IRS1); //Gather values for 4 IR sensors
+  w2 = analogRead(IRS2);
+  w3 = analogRead(IRS3);
+  w4 = analogRead(IRS4);
+
+  num = (w1*x1 + w2*x2 + w3*x3 + w4*x4);
+  den = (w1 + w2 + w3 + w4);
+  linedist = num/den;
+
+  for (i = 0; i < maxarr; i++){
+     distarr [i] = distarr [i + 1];
+  }
+  distarr[maxarr - 1] = linedist;
+  for( i = 0, ave = 0; i < maxarr; i++){
+    ave += distarr[i];
+  }
+  ave /= maxarr;
+    
+  newE = goal - ave;
+  Ed = newE - prevE;        
+  prevE = newE;             
+  
+    pwml = basevall - newE*Kp - Ed*Kd;
+    pwmr = basevalr + newE*Kp + Ed*Kd;
+  
+      
+    if (pwml > limitl){
+      pwml = limitl;           
+    }
+    if (pwmr > limitr){
+      pwmr = limitr;
+    }
+  
+  leftForwards(); // defining the fucntions
+  rightForwards();
+
+    if (pwml < 0){
+      leftBackwards();
+      pwml *= -1;
+    }
+    if (pwmr < 0){
+      rightBackwards();
+      pwml *= -1;  
+    }
   
   Serial.print("L");
   Serial.println(pwml);
   Serial.print("R");
   Serial.println(pwmr);
-  
-  leftForwards();
-  rightForwards();
-  
+   
   analogWrite(5,pwml); // left motor
   analogWrite(6,pwmr); // right motor
-
 }
 
 void leftForwards(void){ //This function sets IN1 = LOW and IN2 = HIGH in order to set the direction to forwards for motor 1
