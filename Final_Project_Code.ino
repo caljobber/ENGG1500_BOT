@@ -1,3 +1,4 @@
+//--------------------------set up code to include all relevant libraries and pin definitions------------
 #include <Servo.h>
 #define TRIG 12
 #define ECHO 7
@@ -13,12 +14,14 @@ Servo myservo;  // create servo object to control a servo
 
 #include <stdio.h>
 #include <ENGG1500Lib.h>
-float IRS1=A3;//left to right of bot
+
+//----------------------------------set pins for IR sensors (from left to right)------------------
+float IRS1=A3;
 float IRS2=A2;
 float IRS3=A1;
 float IRS4=A0;
 
-//-------------------------------For PID--------------------
+//-------------------------------For PID------------------------------------------
 float x1 = -22.5;
 float x2 = -7.5;
 float x3 = 7.5;
@@ -53,9 +56,7 @@ float limitl = 150;
 float limitr = 120;
 float pwml, pwmr;
 
-//----------------------------------------for servo-------------
-
-int i;
+//----------------------------------------for servo---------------------
 
 void setup() {
   myservo.attach(4);  
@@ -72,12 +73,13 @@ void setup() {
   Serial.begin(9600);
   delay(10);
 }
-  int angles[] = {180, 90, 0}; 
+   
+  int angles[] = {180, 90, 0};  //make an array of possible orientations for the US sensor mounted on servo
   int j = 0;
   int distance;
   int val;    // variable to read the value from the analog pin
 
-  int state = 1;
+  int state = 1;    //set starting state to line-following
 
 
 
@@ -90,12 +92,13 @@ void loop() {
   i2 = analogRead(IRS2);
   i3 = analogRead(IRS3);
   i4 = analogRead(IRS4);
-  ----------------------------------SETUP STATE MACHINE--------------------
+  
+  //----------------------------------SETUP STATE MACHINE--------------------
   switch(state) {
     case 1: //line following 
       j = 1;
-      val = angles[j];
-      myservo.write(val)
+      val = angles[j];  
+      myservo.write(val)    //set US sensor to 90 degrees
  
       w1 = analogRead(IRS1); //Gather values for 4 IR sensors
       w2 = analogRead(IRS2);
@@ -155,33 +158,34 @@ void loop() {
       if(i1 < x && i2 < x && i3 < x && i4 < x) {
         distance = sonar_mm();
         if (distance > 80){
-          state = 2;
+          state = 2;    //if no line is detected and there is no wall in front, transition to hallway state
         }
         else{
-          state = 4;
+          state = 4;    //if no line detected and there is a wall in front, transition to end state
         }
       }
       
-      //Test for presence of distraction lines
+      //Test for presence of 90 degree turn
       if(i1>y && i2>y && i3>y && i4<x){
-        state = 3;
+        state = 3;       //if left 3 IR sensors detect a line, transition to 90 degree left turn state
       }
       break;
     
     case 2: //hallway
       j = 0; 
       val = angles[j];
-      myservo.write(val);
+      myservo.write(val);        //orient servo to 0 degrees to face the hallway wall
+     
       //SETTING UP AVERAGES
       unsigned int distance_mm = 0;
       float dataPoints[3]; 
-      float ave = 0;
+      float ave = 0;            //create an array to store 3 measurements of distance from wall
       
       //CALCULATING AVERAGES
       for(i = 0; i<3; i++){
         dataPoints[i] = sonar_mm();
         ave = dataPoints[i]+ ave;
-        delay(10); 
+        delay(10);            //return average of 3 most recent distance measurements for smooth operation
       }
       
       //PRINTING ave and calling motor functions
@@ -197,28 +201,28 @@ void loop() {
      // CHECKING DISTANCE AND TURNING
       if (ave > 50 && ave < 300){
          analogWrite(5, pwm1);
-         analogWrite(6, (pwmr+10));
+         analogWrite(6, (pwmr+10));      //if wall is between 5 and 30cm away, turn towards it
       }
       if (ave < 50){
-         analogWrite(5,(pwm1+10));
-         analogWrite(6,pwmr);
+         analogWrite(5,(pwm1+10));     
+         analogWrite(6,pwmr);           //if wall is less than 5cm away, turn away from it
       }
       if (i1>0 || i2>0 || i3>0 || i4>0){
-        state = 1;
+        state = 1;           //if IR sensors detect the presence of a line, transition to line-following state
       }
     break;
     
     case 3: //90 degree left turn
       analogWrite(6,0);
-      analogWrite(5,pwm1);
+      analogWrite(5,pwm1);         //stop left motor while right motor runs to execute a point turn
       if(ir1<x){
-        state = 1;
+        state = 1;    //when robot has turned enough that left IR sensor no longer detects a line, switch to line-following state
       }
       break;
     
     case 4: //end box
-      analogWrite(6,0);
-      analogWrite(5,0);
+      analogWrite(6,0);      
+      analogWrite(5,0);      //stop both motors when in end box (garage)
       break;
   }
 }
@@ -230,9 +234,9 @@ unsigned int sonar_mm(void){
  const float speed_sound = 340.29;
  digitalWrite(TRIG, HIGH);
  delayMicroseconds(10);
- digitalWrite(TRIG, LOW);
+ digitalWrite(TRIG, LOW);         //Uses speed of sound and US sensor data to calculate distance from objects in mm
  duration = pulseIn(ECHO, HIGH); 
- return (unsigned int)(0.5 * duration * 1e-6 * speed_sound * 1e3);
+ return (unsigned int)(0.5 * duration * 1e-6 * speed_sound * 1e3); 
  }
 
 
