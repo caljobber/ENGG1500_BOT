@@ -1,6 +1,14 @@
 #include <Servo.h>
 #define TRIG 12
 #define ECHO 7
+#include <stdio.h>
+#include <ENGG1500Lib.h>
+#define ENA 5
+#define ENB 6
+#define IN1 8
+#define IN2 9
+#define IN3 10
+#define IN4 11
 Servo myservo;  // create servo object to control a servo
 
 #include <stdio.h>
@@ -49,31 +57,48 @@ void setup() {
 
 void loop() {
 
+  float pwml = 96;
+  float pwmr = 85;
+
+  i1 = analogRead(IRS1); //Gather values for 4 IR sensors
+  i2 = analogRead(IRS2);
+  i3 = analogRead(IRS3);
+  i4 = analogRead(IRS4);
   ----------------------------------SETUP STATE MACHINE--------------------
   switch(state) {
     case 1: //line following 
       j = 1;
       val = angles[j];
       myservo.write(val)
-      i1 = analogRead(IRS1); //Gather values for 4 IR sensors
-      i2 = analogRead(IRS2);
-      i3 = analogRead(IRS3);
-      i4 = analogRead(IRS4);
-      //Serial.println(i1);
-      //Serial.println(i2);
-      //Serial.println(i3);
-      //Serial.println(i4);
-      //Serial.println("segment");
-      delay (1000);
-      sum = 0;
-      lineposition();
+  
+      Serial.print("L");
+      Serial.println(pwml);
+      Serial.print("R");
+      Serial.println(pwmr);
+  
+      leftForwards();
+      rightForwards();
+  
+      analogWrite(5,pwml); // left motor
+      analogWrite(6,pwmr); // right motor
+
+      //Test for line disappearance
       if(i1 < x && i2 < x && i3 < x && i4 < x) {
         distance = sonar_mm();
-        if (distance > 200){
+        if (distance > 80){
           state = 2;
         }
+        else{
+          state = 5;
+        }
+      }
+      
+      //Test for presence of distraction lines
+      if(i1>y && i2>y && i3>y && i4>y){
+        state = 3;
       }
       break;
+    
     case 2: //hallway
       j = 0; 
       val = angles[j];
@@ -96,19 +121,32 @@ void loop() {
       Serial.println(ave);
       leftForwards();  
       rightForwards();
+
+      analogWrite(5,pwml); // left motor
+      analogWrite(6,pwmr); // right motor
       
      // CHECKING DISTANCE AND TURNING
       if (ave > 50 && ave < 300){
-         analogWrite(5, 150);
-         analogWrite(6, 170);
+         analogWrite(5, pwm1);
+         analogWrite(6, (pwmr+10));
       }
       if (ave < 50){
-         analogWrite(5, 170);
-         analogWrite(6, 150);
+         analogWrite(5,(pwm1+10));
+         analogWrite(6,pwmr);
       }
+      if (i1>0 || i2>0 || i3>0 || i4>0){
+        state = 1;
+      }
+    break;
+    
     case 3: //distraction lines
+      
+    
     case 4: //diverging paths
+    
     case 5: //end box
+      analogWrite(6,0);
+      analogWrite(5,0);
     
   }
 }
