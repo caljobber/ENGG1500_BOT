@@ -18,18 +18,44 @@ float IRS2=A2;
 float IRS3=A1;
 float IRS4=A0;
 
-float i1, i2, i3, i4 = 0;
-float lineposition(void);
-float x1 = 22 , x2 = 7, x3 = -7, x4 = -22;//measurements in mm
-float xline;
-float linediff;
-float delaytime;
-float array[5] = {0};
-float sum;
+//-------------------------------For PID--------------------
+float x1 = -22.5;
+float x2 = -7.5;
+float x3 = 7.5;
+float x4 = 22.5;
+float w1;
+float w2;
+float w3;
+float w4;
+
+const float goal = 0; 
+float Ed = 0;
+float Kp = 4;
+float Kd = 18;
+float prevE = 0;
+float newE = 0;
+float linedist = 0; //taken from which ir sensor is active
+float den;
+float num;
 int i;
+const int maxarr = 5;
+float distarr[maxarr] = {0.0f};
+float ave = 0;
+/* 
+//========================================\\
+//THESE VALUES WERE 96 and 85 respectively\\
+//========================================\\
+ */
 
+float basevall = 88;
+float basevalr = 77;
+float limitl = 150; 
+float limitr = 120;
+float pwml, pwmr;
 
+//----------------------------------------for servo-------------
 
+int i;
 
 void setup() {
   myservo.attach(4);  
@@ -70,17 +96,60 @@ void loop() {
       j = 1;
       val = angles[j];
       myservo.write(val)
+ 
+      w1 = analogRead(IRS1); //Gather values for 4 IR sensors
+      w2 = analogRead(IRS2);
+      w3 = analogRead(IRS3);
+      w4 = analogRead(IRS4);
+
+      num = (w1*x1 + w2*x2 + w3*x3 + w4*x4);
+      den = (w1 + w2 + w3 + w4);
+      linedist = num/den;
+
+      for (i = 0; i < maxarr; i++){
+         distarr [i] = distarr [i + 1];
+      }
+      distarr[maxarr - 1] = linedist;
+      for( i = 0, ave = 0; i < maxarr; i++){
+        ave += distarr[i];
+      }
+      ave /= maxarr;
+    
+      newE = goal - ave;
+      Ed = newE - prevE;        
+      prevE = newE;             
+  
+      pwml = basevall - newE*Kp - Ed*Kd;
+      pwmr = basevalr + newE*Kp + Ed*Kd;
+  
+      
+      if (pwml > limitl){
+        pwml = limitl;           
+      }
+      if (pwmr > limitr){
+        pwmr = limitr;
+      }
+  
+      leftForwards(); // defining the fucntions
+      rightForwards();
+
+      if (pwml < 0){
+        leftBackwards();
+        pwml *= -1;
+      }
+      if (pwmr < 0){
+        rightBackwards();
+        pwml *= -1;  
+      }
   
       Serial.print("L");
       Serial.println(pwml);
       Serial.print("R");
       Serial.println(pwmr);
-  
-      leftForwards();
-      rightForwards();
-  
+   
       analogWrite(5,pwml); // left motor
       analogWrite(6,pwmr); // right motor
+
 
       //Test for line disappearance
       if(i1 < x && i2 < x && i3 < x && i4 < x) {
@@ -89,12 +158,12 @@ void loop() {
           state = 2;
         }
         else{
-          state = 5;
+          state = 4;
         }
       }
       
       //Test for presence of distraction lines
-      if(i1>y && i2>y && i3>y && i4>y){
+      if(i1>y && i2>y && i3>y && i4<x){
         state = 3;
       }
       break;
@@ -139,15 +208,18 @@ void loop() {
       }
     break;
     
-    case 3: //distraction lines
-      
+    case 3: //90 degree left turn
+      analogWrite(6,0);
+      analogWrite(5,pwm1);
+      if(ir1<x){
+        state = 1;
+      }
+      break;
     
-    case 4: //diverging paths
-    
-    case 5: //end box
+    case 4: //end box
       analogWrite(6,0);
       analogWrite(5,0);
-    
+      break;
   }
 }
 
@@ -163,6 +235,8 @@ unsigned int sonar_mm(void){
  return (unsigned int)(0.5 * duration * 1e-6 * speed_sound * 1e3);
  }
 
+
+//--------------------------------MOTOR FUNCTIONS------------------
 void leftForwards(void)
 {
   digitalWrite(8,LOW);
@@ -184,24 +258,4 @@ void rightBackwards(void)
 {
   digitalWrite(10,HIGH);
   digitalWrite(11,LOW);
-}
-
-//--------------------------------------------------line position function------------------------------------------
-
-float lineposition(void){
-    //need to read the values from each sensor and initialise them as w1,w2,w3,w4
-
-        xline = ((i1*x1 + i2*x2 + i3*x3 + i4*x4)/(i1 + i2 + i3 + i4));
-        array[0]= array[1];
-        array[1]= array[2];
-        array[2]= array[3];
-        array[3]= array[4];
-        array[4]= xline;
-        //Serial.println(xline);
-        for(i=0;i<5;i++){//sum the 5 elements in the array, this is the first case
-        sum+= array[i];
-        //Serial.println(sum);
-        }
-        sum/=5;
-        Serial.println(sum); 
 }
