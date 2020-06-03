@@ -29,7 +29,7 @@
 	const float Kd = 0;
 	float I = 0;
 	float newE = 0;
-	float Errors[5] = {0};
+	float errors[5] = {0};
 	float linedist = 0; //taken from which ir sensor is active
 	float den;
 	float num;
