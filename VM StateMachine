@@ -1,0 +1,353 @@
+//--------------------------set up code to include all relevant libraries and pin definitions------------
+  #include <stdio.h>
+  #include <ENGG1500Lib.h>
+  #include <Servo.h>
+
+// ========== STATES ==========
+  #define HALLWAY 1
+  #define DEAD_END 2
+  #define GARAGE 3
+
+// ========== ULTRASONIC SENSOR (US) ==========
+  #define ECHO 7
+  #define TRIG 12
+
+// ========== INFRARED SENSOR (IR) ==========
+  //left to right of bot
+  #define IRS1 A3 
+  #define IRS2 A2
+  #define IRS3 A1
+  #define IRS4 A0
+
+
+// ========== MOTORS ==========
+
+  //Left
+  #define ENA 5
+    //Forwards and Backwards Control
+    #define IN1 8
+    #define IN2 9
+  //Right
+  #define ENB 6
+    //Forwards and Backwards Control
+    #define IN3 10
+    #define IN4 11
+
+// ========== SERVO ==========
+  Servo myservo; 
+
+// ========== PID ==========
+
+// Distance IR sensors are from centre of robot
+  float x1 = -22.5;
+  float x2 = -7.5;
+  float x3 = 7.5;
+  float x4 = 22.5;
+
+// Where readings from the IR is being stored
+  float w1;
+  float w2;
+  float w3;
+  float w4;
+
+// Setting up variables to be used for PID
+  float goal = 0; 
+  
+  float Kp = 3.2;
+  float Ki = 0.2;
+  float Kd = 7;
+  
+  float I = 0;
+  float Ed = 0;
+  float prevE = 0;
+  float newE = 0;
+  float E1, E2, E3, E4, E5 = 0;
+  float linedist = 0;
+  float den;
+  float num;
+  int maxarr = 2;
+  float ave = 0;
+  int i;
+ 
+  float basevall = 50;
+  float basevalr = 50;
+  float limitl = 90; 
+  float limitr = 90;
+  float minl = 40; 
+  float minr = 40;
+  float pwml, pwmr;
+
+//A value that is in between the black and white readings of IR sensor, used for condition loops  
+  const float WIR = 100;
+
+// ========== for servo ========== 
+  int angles[] = {180, 90, 0};  //make an array of possible orientations for the US sensor mounted on servo
+  int a = 0;
+  float walldist = 0;
+  int state;
+ //set starting state to line-following
+
+void setup() {
+  myservo.attach(4);  
+ 
+  pinMode(TRIG, OUTPUT);
+  pinMode(ECHO, INPUT);
+  
+  pinMode(A0, INPUT);
+  pinMode(A1, INPUT);
+  pinMode(A2, INPUT);
+  pinMode(A3, INPUT);
+  
+  pinMode(ENA, OUTPUT); //set ENA as an output
+  pinMode(ENB, OUTPUT); //set ENB as an output
+  pinMode(IN1, OUTPUT); //set IN1 as an output
+  pinMode(IN2, OUTPUT); //set IN2 as an output
+  pinMode(IN3, OUTPUT); //set IN3 as an output
+  pinMode(IN4, OUTPUT); //set IN4 as an output
+  
+  Serial.begin(9600);
+}
+
+void loop() {
+
+  w1 = analogRead(IRS1); //Gather values for 4 IR sensors
+  w2 = analogRead(IRS2);
+  w3 = analogRead(IRS3);
+  w4 = analogRead(IRS4);
+
+  state = 4;
+  
+  switch(state){
+    
+//HALLWAY       
+    case HALLWAY: 
+      Serial.println("HALLWAY");     
+      /*
+      a = 0;
+      myservo.write(angles[a]);
+     
+      walldist = sonar_mm();   
+      maxarr = 5;
+      float distarr[maxarr] = {0.0f};
+      
+      
+      for (i = 0; i < maxarr; i++){
+        distarr [i] = distarr [i + 1];
+      }
+      distarr[maxarr - 1] = walldist;
+      for( i = 0, ave = 0; i < maxarr; i++){
+        ave += distarr[i];
+      }
+      ave /= maxarr;
+
+      Serial.print("ave=");
+      Serial.println(ave);
+
+      goal = 150;
+      
+      newE = goal - ave;
+      Ed = newE - prevE;        
+      prevE = newE;
+
+      I = newE + prevE + E1 + E2 + E3 + E4 + E5;
+      E5 = E4; 
+      E4 = E3; 
+      E3 = E2; 
+      E2 = E1; 
+      E1 = prevE; 
+      prevE = newE;
+     
+      pwml = basevall - newE*Kp - Ed*Kd - I*Ki;
+      pwmr = basevalr + newE*Kp + Ed*Kd + I*Ki;
+       
+      leftForwards(); // defining the fucntions
+      rightForwards();
+    
+      if (pwml < 0){
+        leftBackwards();
+        pwml *= -1;
+      }
+      if (pwmr < 0){
+        rightBackwards();
+        pwml *= -1;  
+      }
+      
+      if (pwml > limitl)
+        pwml = limitl;           
+      if (pwmr > limitr)
+        pwmr = limitr;
+        
+      if (pwml < minl)
+        pwml += 15;           
+      if (pwmr < minr)
+        pwmr += 15;        
+  
+//      Serial.print("L");
+//      Serial.println(pwml);
+//      Serial.print("R");
+//      Serial.println(pwmr);
+        
+      analogWrite(5,pwml); // left motor
+      analogWrite(6,pwmr); // right motor
+    
+      //if (w1>0 || w2>0 || w3>0 || w4>0){
+      //  Serial.print("GGGGGGGG");//if IR sensors detect the presence of a line, transition to line-following state
+      //  exit(0);
+      //}
+      */
+    break;
+    
+//DEAD END
+    case 2:
+      Serial.println("DEAD END");
+    break;
+    
+//GARAGE
+    case 3:
+      Serial.println("GARAGE");
+    break;
+    
+//LINE FOLLOW    
+    case 4:
+      Serial.println("LINE FOLLOW");
+      a = 1;
+      myservo.write(angles[a]);
+      walldist = sonar_mm();
+      Serial.println(walldist);
+      w1 = analogRead(IRS1); //Gather values for 4 IR sensors
+      w2 = analogRead(IRS2);
+      w3 = analogRead(IRS3);
+      w4 = analogRead(IRS4);
+          
+      if(w1 < WIR && w2 < WIR && w3 < WIR && w4 < WIR){
+        leftForwards();
+        rightForwards();
+        analogWrite(5,0);
+        analogWrite(6,0);
+        
+        a = 1;
+        myservo.write(angles[a]);
+        delay(500);
+        walldist = sonar_mm();
+        if (walldist < 500){
+          state = GARAGE;
+          break;
+        }
+        
+        a = 0;
+        myservo.write(angles[a]);
+        delay(100);
+        walldist = sonar_mm();
+        Serial.println(walldist);
+        if (walldist < 300){
+          state = HALLWAY;
+          break;
+        }else{
+          while (w1 < WIR && w2 < WIR && w3 < WIR && w4 < WIR){
+            Serial.println("White");
+            rightForwards();
+            analogWrite(6,50);
+            delay(10);
+          }   
+        }
+      }else if (walldist < 120){
+        state = DEAD_END;
+        break;
+      }
+    
+      num = (w1*x1 + w2*x2 + w3*x3 + w4*x4);
+      den = (w1 + w2 + w3 + w4);
+      linedist = num/den;
+
+      maxarr = 2;
+      float distarr[maxarr] = {0.0f};
+      
+      for (i = 0; i < maxarr; i++){
+         distarr [i] = distarr [i + 1];
+      }
+      distarr[maxarr - 1] = linedist;
+      for( i = 0, ave = 0; i < maxarr; i++){
+        ave += distarr[i];
+      }
+      ave /= maxarr;
+    
+        //Serial.print("ave=");
+        //Serial.println(ave);
+    
+      newE = goal - ave;
+      Ed = newE - prevE;        
+      prevE = newE; 
+    
+      I = newE + prevE + E1 + E2 + E3 + E4 + E5;
+      E5 = E4; 
+      E4 = E3; 
+      E3 = E2; 
+      E2 = E1; 
+      E1 = prevE; 
+      prevE = newE;
+      
+      pwml = basevall - newE*Kp - Ed*Kd - I*Ki;
+      pwmr = basevalr + newE*Kp + Ed*Kd + I*Ki;
+       
+      leftForwards(); // defining the fucntions
+      rightForwards();
+    
+      if (pwml < 0){
+        leftBackwards();
+        pwml *= -1;
+      }
+      if (pwmr < 0){
+        rightBackwards();
+        pwml *= -1;  
+      }
+    
+      if (pwml > limitl)
+        pwml = limitl;           
+      if (pwmr > limitr)
+        pwmr = limitr;
+        
+      if (pwml < minl)
+        pwml += 15;           
+      if (pwmr < minr)
+        pwmr += 15;        
+    
+      analogWrite(5,pwml); // left motor
+      analogWrite(6,pwmr); // right motor
+    break;
+  }
+}
+
+
+
+
+// ========== DISTANCE FUNCTION ========== 
+  unsigned int sonar_mm(void){
+    long duration = 0;
+    const float speed_sound = 340.29;
+    digitalWrite(TRIG, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(TRIG, LOW);         //Uses speed of sound and US sensor data to calculate distance from objects in mm
+    duration = pulseIn(ECHO, HIGH); 
+    return (unsigned int)(0.5 * duration * 1e-6 * speed_sound * 1e3); 
+  }
+
+
+// ========== MOTOR FUNCTIONS ========== 
+  void leftForwards(void){
+    digitalWrite(8,LOW);
+    digitalWrite(9,HIGH);
+  }
+  
+  void leftBackwards(void){
+    digitalWrite(8,HIGH);
+    digitalWrite(9,LOW);
+  }
+  
+  void rightForwards(void){
+    digitalWrite(10,LOW);
+    digitalWrite(11,HIGH);
+  }
+  void rightBackwards(void){
+    digitalWrite(10,HIGH);
+    digitalWrite(11,LOW);
+  }
