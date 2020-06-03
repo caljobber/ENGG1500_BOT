@@ -95,7 +95,7 @@
 			errors[i] = errors[i+1];
 		}
 		errors[5]=newE;
-		for(i=5; i>1; i--){//calculating Ed and Ei 
+		for(i=4; i>1; i--){//calculating Ed and Ei 
 			Ed+=((errors[i]-errors[i-1])/(times[i]-times[i-1]));//using gradient from Error vs Time graph
 			Ei+=((0.5*(errors[i]+errors[i-1]))*(times[i]-times[i-1]));//using trapezoidal rule here
 		}
