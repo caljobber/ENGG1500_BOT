@@ -95,11 +95,10 @@
 			errors[i] = errors[i+1];
 		}
 		errors[5]=newE;
-		for(i=4; i>1; i--){//calculating Ed and Ei 
-			Ed+=((errors[i]-errors[i-1])/(times[i]-times[i-1]));//using gradient from Error vs Time graph
+		for(i=4; i>1; i--){//calculating Ei 
 			Ei+=((0.5*(errors[i]+errors[i-1]))*(times[i]-times[i-1]));//using trapezoidal rule here
 		}
-		Ed/=Ed;
+		Ed=((errors[5]-errors[4])/(times[5]-times[4]));//using gradient from Error vs Time graph
 		pwml = basevall - newE*Kp - Ed*Kd - Ei*Ki;
 		pwmr = basevalr + newE*Kp + Ed*Kd + Ei*Ki;
 
