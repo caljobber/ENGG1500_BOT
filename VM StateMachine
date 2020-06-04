@@ -39,53 +39,114 @@
 // ========== PID ==========
 
 // Distance IR sensors are from centre of robot
-  float x1 = -22.5;
-  float x2 = -7.5;
-  float x3 = 7.5;
-  float x4 = 22.5;
 
-// Where readings from the IR is being stored
-  float w1;
-  float w2;
-  float w3;
-  float w4;
+  /*
+   * Distance of left most sensor from centre of bot
+   * Distance of left middle sensor from centre of bot
+   * Distance of right middle sensor from centre of bot
+   * Distance of right most sensor from centre of bot
+   */
+ 
+  float x1 = -22.5;                                             
+  float x2 = -7.5;                                              
+  float x3 = 7.5;                                               
+  float x4 = 22.5;                                             
+  
+  /*
+   * Where the reading from left most sensor is stored
+   * Where the reading from left middle sensor is stored
+   * Where the reading from right middle sensor is stored
+   * Where the reading from right most sensor is stored
+   */
+  
+  float w1;                                                     
+  float w2;                                                     //
+  float w3;                                                     //
+  float w4;                                                     //
 
 // Setting up variables to be used for PID
-  float goal = 0; 
   
-  float Kp = 3.2;
-  float Ki = 0.2;
-  float Kd = 7;
+  /*
+   * The position where we want the robot to be (i.e the centre of the line)
+   */
+  float goal = 0;                                               
+
+  /*
+   *Proportional constant
+   *Integral constant   
+   *Derivative constant   
+   */
   
-  float I = 0;
-  float Ed = 0;
-  float prevE = 0;
-  float newE = 0;
-  float E1, E2, E3, E4, E5 = 0;
-  float linedist = 0;
-  float den;
-  float num;
-  int maxarr = 2;
-  float ave = 0;
+  float Kp = 4.1;                                               
+  float Ki = 0.2;                                               
+  float Kd = 11; 
+
+  /*
+   * Initially I = 0, but will later be changed 
+   * Used to store the difference between previous error and new error
+   * Previous error
+   * New error
+   * Used to concatenate error values to be used for I
+   * Used later to store the ditance the robot is from the line
+   * Used for weighted average calulation
+   * Used for weighted average calulation
+   * Used as a counter in for loops
+   */
+                                                 
+  float I = 0;                                                  
+  float Ed = 0;                                                 
+  float prevE = 0;                                              
+  float newE = 0;                                               
+  float E1, E2, E3, E4, E5 = 0;                                 
+  float linedist = 0;                                           
+  float den;                                                    
+  float num;                                                    
   int i;
- 
-  float basevall = 50;
-  float basevalr = 50;
-  float limitl = 90; 
-  float limitr = 90;
-  float minl = 40; 
-  float minr = 40;
+                                                          
+ /*
+  * The starting left pwml value and the value which the changes are applied to
+  * The starting left pwml value and the value which the changes are applied to
+  * The highest speed limit for the left motor
+  * The highest speed limit for the right motor
+  * The lowest speed limit for the left motor
+  * The lowest speed limit for the right motor
+  * Values used to change the speed of motors
+  */
+  
+  float basevall = 60;                                           
+  float basevalr = 60;                                         
+  float limitl = 65; 
+  float limitr = 65;
+  float minl = 55; 
+  float minr = 55;
   float pwml, pwmr;
 
-//A value that is in between the black and white readings of IR sensor, used for condition loops  
-  const float WIR = 100;
+  /*
+   * A value that is in between the black and white readings of IR sensor, used for condition loops   
+   */
+ 
+  const float WIR = 40;
 
 // ========== for servo ========== 
-  int angles[] = {180, 90, 0};  //make an array of possible orientations for the US sensor mounted on servo
+  
+  /*
+   * Make an array of possible orientations for the US sensor mounted on servo
+   * Used to select which angle to use
+   * The value used to store the distance from the wall in mm
+   * Use while changing and engaging states
+   */
+   
+  int angles[] = {180, 90, 0};
   int a = 0;
   float walldist = 0;
   int state;
- //set starting state to line-following
+  
+  /*
+   * Used for identifing where the robot is on the track
+   */
+   
+  int hall = 0; 
+
 
 void setup() {
   myservo.attach(4);  
@@ -98,29 +159,51 @@ void setup() {
   pinMode(A2, INPUT);
   pinMode(A3, INPUT);
   
-  pinMode(ENA, OUTPUT); //set ENA as an output
-  pinMode(ENB, OUTPUT); //set ENB as an output
-  pinMode(IN1, OUTPUT); //set IN1 as an output
-  pinMode(IN2, OUTPUT); //set IN2 as an output
-  pinMode(IN3, OUTPUT); //set IN3 as an output
-  pinMode(IN4, OUTPUT); //set IN4 as an output
+  pinMode(ENA, OUTPUT); 
+  pinMode(ENB, OUTPUT); 
+  pinMode(IN1, OUTPUT); 
+  pinMode(IN2, OUTPUT); 
+  pinMode(IN3, OUTPUT); 
+  pinMode(IN4, OUTPUT); 
   
   Serial.begin(9600);
 }
 
 void loop() {
- 
-  w1 = analogRead(IRS1); //Gather values for 4 IR sensors
+  /* 
+   *  Gather the values that are being read by the 4 IR sensors
+   */
+  w1 = analogRead(IRS1);
   w2 = analogRead(IRS2);
   w3 = analogRead(IRS3);
   w4 = analogRead(IRS4);
- 
+  
+  /* 
+   *  Start the switch state and set state value to 4, 
+   *  so that only the 'default' (Line Following) code runs
+   */
+   
+  state = 4;
   switch(state){
-    
-//HALLWAY       
+
     case HALLWAY:     
       
+      /*  
+       *  Start hallway state, when state = HALLWAY
+       *  Same code for both hallways
+       *  While there is no line run this code
+       *  Therefore it will keep looping until
+       *  it finds the line on the other side
+       */
+
       while (w1 < WIR && w2 < WIR && w3 < WIR && w4 < WIR){
+
+        /*
+         * Keeps track of IR sensors to detect the line
+         * Defines the motor functions
+         * Runs the motor forward
+         * These PWMs have been calibrated for the robot to go straight
+         */
 
         Serial.println("HALLWAY"); 
         
@@ -129,117 +212,184 @@ void loop() {
         w3 = analogRead(IRS3);
         w4 = analogRead(IRS4);
         
-        leftForwards();
+        leftForwards(); // defining the fucntions
         rightForwards();
-        analogWrite(6,50);
-        analogWrite(6,50);
-      }
 
+        
+        analogWrite(5,60); // left motor
+        analogWrite(6,74); // right motor
+      }
+      
+      /*
+       * Sets servo to look forward again once line has been hit
+       * Set to line follow state
+       * Increments 'hall' counter by one 
+       */
+       
       a = 1;
       myservo.write(angles[a]);
       walldist = sonar_mm();
       delay(500);
 
       state = 4;
-      
+
+      hall++;   
     break;
-    
-//DEAD END
+
     case DEAD_END:
+      
+      /*
+       * Start dead end state, when state = DEAD_END
+       * Scans for a wall and will loop
+       * until there is no wall
+       */
+       
       Serial.println("DEAD END");
+      
+      /*
+       * Set servo to look forward
+       * Take distance reading
+       * While the wall is less than 50 cm away, loop this
+       * Take the reading
+       * Turn the bot right
+       */
+       
+      a = 1;
+      myservo.write(angles[a]);
+      delay(500);
+      walldist = sonar_mm();
+           
+      while (walldist < 500){
+        walldist = sonar_mm();
+        delay(100);
+        leftForwards();
+        analogWrite(5,60);
+      }
+
+      /*
+       * Set to line follow state
+       */
+       
+      state = 4;
     break;
     
-//GARAGE
     case GARAGE:
+
+      /*
+       * Start garage state, when state = GARAGE
+       * Scans for a wall and will loop
+       * until the wall is only 10 cm from the robot
+       */
+      
       Serial.println("GARAGE");
-    break;
-    
-//LINE FOLLOW    
-    default:
-      Serial.println("LINE FOLLOW");
+
+      /*
+       * Set servo to look forward
+       * Take distance reading from wall
+       * While the wall is less than 10 cm away, loop this
+       * Move both motors forward
+       * These PWMs have been calibrated for the robot to go straight
+       */
+      
       a = 1;
       myservo.write(angles[a]);
       walldist = sonar_mm();
-      Serial.print(walldist);
       
+      while(walldist < 100){
+        leftForwards(); // defining the fucntions
+        rightForwards();
+        
+        analogWrite(5,60); // left motor
+        analogWrite(6,74); // right motor
+      }
+
+      /*
+       * Stop both motors
+       * Exit the program
+       */
+
+      leftForwards(); // defining the fucntions
+      rightForwards();
+      
+      analogWrite(5,0); // left motor
+      analogWrite(6,0); // right motor
+
+      exit(0);
+    break;
+   
+    default:
+      
+      /*
+       * Start default state, when state is not equal to
+       * one of the states above, the line follow state
+       * follows line and will loop
+       * until the there is no line, OR
+       * if there is a wall in front of the robot
+       */
+       
+      Serial.println("LINE_FOLLOW");
+      
+      /*
+       * Set servo to face forward
+       * Take distance reading
+       */
+       
+      a = 1;
+      myservo.write(angles[a]);
+      delay (500);
+      walldist = sonar_mm();
+
+      /*
+       * Read values from each of the IR sensors
+       */
+
       w1 = analogRead(IRS1); //Gather values for 4 IR sensors
       w2 = analogRead(IRS2);
       w3 = analogRead(IRS3);
       w4 = analogRead(IRS4);
 
-      if (walldist < 120){
-        leftForwards();
-        rightForwards();
-        analogWrite(5,0);
-        analogWrite(6,0);
-        state = DEAD_END;
-        break;
-      }
-          
-      if(w1 < WIR && w2 < WIR && w3 < WIR && w4 < WIR){
-        leftForwards();
-        rightForwards();
-        analogWrite(5,0);
-        analogWrite(6,0);
-        
-        a = 1;
-        myservo.write(angles[a]);
-        delay(500);
-        walldist = sonar_mm();
-        if (walldist < 500){
-          state = GARAGE;
-          break;
-        }
-        
-        a = 0;
-        myservo.write(angles[a]);
-        delay(500);
-        walldist = sonar_mm();
-        if (walldist < 300){
-          state = HALLWAY;
-          break;
-        }else if (w1 < WIR && w2 < WIR && w3 < WIR && w4 < WIR){
-          while (w1 < WIR && w2 < WIR && w3 < WIR && w4 < WIR){
-            w1 = analogRead(IRS1); //Gather values for 4 IR sensors
-            w2 = analogRead(IRS2);
-            w3 = analogRead(IRS3);
-            w4 = analogRead(IRS4);
-            Serial.println("White");
-            rightForwards();
-            analogWrite(6,50);
-            delay(10);
-          }
-          break;   
-        } 
-      }
-
-      
-
-
-      
+      /* 
+       * Using the IR sensor readings and 
+       * their respective distances 
+       * from the centre of the robot 
+       * the 'weighted average' is calulated
+       * indicating how far the robot is
+       * from the line
+       */
+       
       num = (w1*x1 + w2*x2 + w3*x3 + w4*x4);
       den = (w1 + w2 + w3 + w4);
       linedist = num/den;
 
-      maxarr = 2;
-      float distarr[maxarr] = {0.0f};
+      /*
+       * For Debugging purposes
+       */
       
-      for (i = 0; i < maxarr; i++){
-         distarr [i] = distarr [i + 1];
-      }
-      distarr[maxarr - 1] = linedist;
-      for( i = 0, ave = 0; i < maxarr; i++){
-        ave += distarr[i];
-      }
-      ave /= maxarr;
-    
-        //Serial.print("ave=");
-        //Serial.println(ave);
-    
-      newE = goal - ave;
+      Serial.print(w1);
+      Serial.print("\t");
+      Serial.print(w2);
+      Serial.print("\t");
+      Serial.print(w3);
+      Serial.print("\t");
+      Serial.print(w4);
+      Serial.print("\t");
+      Serial.println(linedist);
+
+      /*
+       * Finds the error using the line distance calulated above
+       * Finds the difference between the new and previous error
+       * (These values will change at each itteration)
+       */
+
+      newE = goal - linedist;
       Ed = newE - prevE;        
-      prevE = newE; 
-    
+      
+      /*
+       * Sets the integral value to equal to the
+       * sum of the previous errors
+       * Concatenates values as they will change at each itteration 
+       */
+       
       I = newE + prevE + E1 + E2 + E3 + E4 + E5;
       E5 = E4; 
       E4 = E3; 
@@ -247,13 +397,31 @@ void loop() {
       E2 = E1; 
       E1 = prevE; 
       prevE = newE;
-      
+
+      /*
+       * Uses the values calculated above and the constants from the start
+       * to calculate how the pwml and pwmr values are to be changed
+       * pwml uses negatives and pwmr uses postives, but both
+       * can increase or decrease the base values as the sign 
+       * of the newE can change
+       */
       pwml = basevall - newE*Kp - Ed*Kd - I*Ki;
       pwmr = basevalr + newE*Kp + Ed*Kd + I*Ki;
        
+      /*
+       * Calling the forwards functions for both motors
+       */
+      
       leftForwards(); // defining the fucntions
       rightForwards();
-    
+
+      /*
+       * These code segments test if after the PID calculation
+       * the pwm values are negative
+       * if they are, it calls the backwards functions 
+       * for each motors and sets the pwm to postive
+       */
+       
       if (pwml < 0){
         leftBackwards();
         pwml *= -1;
@@ -262,7 +430,14 @@ void loop() {
         rightBackwards();
         pwml *= -1;  
       }
-    
+
+      /*
+       * Checks if the pwm values are greater or lower than the
+       * values set at the start
+       * If they are, it will set them to limits to prevent the bot from
+       * stopping or speeding
+       */
+
       if (pwml > limitl)
         pwml = limitl;           
       if (pwmr > limitr)
@@ -272,9 +447,131 @@ void loop() {
         pwml += 15;           
       if (pwmr < minr)
         pwmr += 15;        
-    
+      
+      /*
+       * After all the calulations, the pwm values are written to the motors
+       */
+      
       analogWrite(5,pwml); // left motor
       analogWrite(6,pwmr); // right motor
+
+//  ========== State Checker ==========       
+      /*
+       * As the code executes so fast, this state checking will
+       * happen almost simultaneously to the line follow
+       */
+       
+      /*
+       * First while the bot is on the line, it checks for a 
+       * wall within 12 cm in front of it and it has completed
+       * the hallway states 2 times
+       * Calls both motor functions and stops them
+       * Sets the state to DEAD_END
+       */
+       
+      if (walldist < 120 && hall == 2){
+        leftForwards();
+        rightForwards();
+        analogWrite(5,0);
+        analogWrite(6,0);
+        state = DEAD_END;
+        break;
+      }
+
+
+      /*
+       * Read values from each of the IR sensors
+       */
+
+      w1 = analogRead(IRS1); //Gather values for 4 IR sensors
+      w2 = analogRead(IRS2);
+      w3 = analogRead(IRS3);
+      w4 = analogRead(IRS4);
+
+      /*
+       * Checks to see all of the IR sensors are outputting
+       * below the WIR threshold value, thus indicating that
+       * there is no line
+       */
+       
+      if(w1 < WIR && w2 < WIR && w3 < WIR && w4 < WIR){
+
+        /*
+         * Calls both motor functions and stops them
+         */
+         
+        leftForwards();
+        rightForwards();
+        analogWrite(5,0);
+        analogWrite(6,0);
+        
+        /*
+         * Set servo to face forward
+         * Take distance reading
+         */
+        
+        a = 1;
+        myservo.write(angles[a]);
+        delay(500);
+        walldist = sonar_mm();
+
+        /*
+         * If the distance read is less than 50 cm 
+         * and both hallways have been completed
+         * set the state to GARAGE
+         */
+
+        if (walldist < 500 && hall == 2){
+          state = GARAGE;
+          break;
+        }
+        
+        /*
+         * Set servo to face 90 degrees to the left
+         * Take distance reading
+         */
+         
+        a = 0;
+        myservo.write(angles[a]);
+        delay(500);
+        walldist = sonar_mm();
+        
+        /*
+         * If the distance read is less than 300 cm 
+         * set the state to GARAGE
+         */
+         
+        if (walldist < 300){
+          state = HALLWAY;
+          break;
+        }
+        
+        /*
+         * Else if the distance is not less than 300
+         * ie it is not facing any obstacles on the left
+         *  While there is no line run this
+         *  Therefore it will keep looping until
+         *  it finds the line 
+         *  (THIS IS A SOLTUION TO THE 90 degree turn)
+         *  Calls the right and left motors and sets them
+         *  to make a tight left hand turn
+         */
+         
+        else{
+          while (w1 < WIR && w2 < WIR && w3 < WIR && w4 < WIR){
+            w1 = analogRead(IRS1); //Gather values for 4 IR sensors
+            w2 = analogRead(IRS2);
+            w3 = analogRead(IRS3);
+            w4 = analogRead(IRS4);
+            Serial.print("5");
+            leftBackwards();
+            rightForwards();
+            analogWrite(5,40);
+            analogWrite(6,65);
+          }
+          break;   
+        } 
+      }
     break;
   }  
 }
@@ -288,13 +585,13 @@ void loop() {
     const float speed_sound = 340.29;
     digitalWrite(TRIG, HIGH);
     delayMicroseconds(10);
-    digitalWrite(TRIG, LOW);         //Uses speed of sound and US sensor data to calculate distance from objects in mm
+    digitalWrite(TRIG, LOW);
     duration = pulseIn(ECHO, HIGH); 
     return (unsigned int)(0.5 * duration * 1e-6 * speed_sound * 1e3); 
   }
 
 
-// ========== MOTOR FUNCTIONS ========== 
+// ========== MOTOR FUNCTIONS ==========
   void leftForwards(void){
     digitalWrite(8,LOW);
     digitalWrite(9,HIGH);
