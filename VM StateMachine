@@ -109,115 +109,72 @@ void setup() {
 }
 
 void loop() {
-
+ 
   w1 = analogRead(IRS1); //Gather values for 4 IR sensors
   w2 = analogRead(IRS2);
   w3 = analogRead(IRS3);
   w4 = analogRead(IRS4);
-
-  state = 4;
-  
+ 
   switch(state){
     
 //HALLWAY       
-    case HALLWAY: 
-      Serial.println("HALLWAY");     
-      /*
-      a = 0;
+    case HALLWAY:     
+      
+      while (w1 < WIR && w2 < WIR && w3 < WIR && w4 < WIR){
+
+        Serial.println("HALLWAY"); 
+        
+        w1 = analogRead(IRS1); //Gather values for 4 IR sensors
+        w2 = analogRead(IRS2);
+        w3 = analogRead(IRS3);
+        w4 = analogRead(IRS4);
+        
+        leftForwards();
+        rightForwards();
+        analogWrite(6,50);
+        analogWrite(6,50);
+      }
+
+      a = 1;
       myservo.write(angles[a]);
-     
-      walldist = sonar_mm();   
-      maxarr = 5;
-      float distarr[maxarr] = {0.0f};
-      
-      
-      for (i = 0; i < maxarr; i++){
-        distarr [i] = distarr [i + 1];
-      }
-      distarr[maxarr - 1] = walldist;
-      for( i = 0, ave = 0; i < maxarr; i++){
-        ave += distarr[i];
-      }
-      ave /= maxarr;
+      walldist = sonar_mm();
+      delay(500);
 
-      Serial.print("ave=");
-      Serial.println(ave);
-
-      goal = 150;
+      state = 4;
       
-      newE = goal - ave;
-      Ed = newE - prevE;        
-      prevE = newE;
-
-      I = newE + prevE + E1 + E2 + E3 + E4 + E5;
-      E5 = E4; 
-      E4 = E3; 
-      E3 = E2; 
-      E2 = E1; 
-      E1 = prevE; 
-      prevE = newE;
-     
-      pwml = basevall - newE*Kp - Ed*Kd - I*Ki;
-      pwmr = basevalr + newE*Kp + Ed*Kd + I*Ki;
-       
-      leftForwards(); // defining the fucntions
-      rightForwards();
-    
-      if (pwml < 0){
-        leftBackwards();
-        pwml *= -1;
-      }
-      if (pwmr < 0){
-        rightBackwards();
-        pwml *= -1;  
-      }
-      
-      if (pwml > limitl)
-        pwml = limitl;           
-      if (pwmr > limitr)
-        pwmr = limitr;
-        
-      if (pwml < minl)
-        pwml += 15;           
-      if (pwmr < minr)
-        pwmr += 15;        
-  
-//      Serial.print("L");
-//      Serial.println(pwml);
-//      Serial.print("R");
-//      Serial.println(pwmr);
-        
-      analogWrite(5,pwml); // left motor
-      analogWrite(6,pwmr); // right motor
-    
-      //if (w1>0 || w2>0 || w3>0 || w4>0){
-      //  Serial.print("GGGGGGGG");//if IR sensors detect the presence of a line, transition to line-following state
-      //  exit(0);
-      //}
-      */
     break;
     
 //DEAD END
-    case 2:
+    case DEAD_END:
       Serial.println("DEAD END");
     break;
     
 //GARAGE
-    case 3:
+    case GARAGE:
       Serial.println("GARAGE");
     break;
     
 //LINE FOLLOW    
-    case 4:
+    default:
       Serial.println("LINE FOLLOW");
       a = 1;
       myservo.write(angles[a]);
       walldist = sonar_mm();
-      Serial.println(walldist);
+      Serial.print(walldist);
+      
       w1 = analogRead(IRS1); //Gather values for 4 IR sensors
       w2 = analogRead(IRS2);
       w3 = analogRead(IRS3);
       w4 = analogRead(IRS4);
+
+      if (walldist < 120){
+        leftForwards();
+        rightForwards();
+        analogWrite(5,0);
+        analogWrite(6,0);
+        state = DEAD_END;
+        break;
+      }
           
       if(w1 < WIR && w2 < WIR && w3 < WIR && w4 < WIR){
         leftForwards();
@@ -236,25 +193,30 @@ void loop() {
         
         a = 0;
         myservo.write(angles[a]);
-        delay(100);
+        delay(500);
         walldist = sonar_mm();
-        Serial.println(walldist);
         if (walldist < 300){
           state = HALLWAY;
           break;
-        }else{
+        }else if (w1 < WIR && w2 < WIR && w3 < WIR && w4 < WIR){
           while (w1 < WIR && w2 < WIR && w3 < WIR && w4 < WIR){
+            w1 = analogRead(IRS1); //Gather values for 4 IR sensors
+            w2 = analogRead(IRS2);
+            w3 = analogRead(IRS3);
+            w4 = analogRead(IRS4);
             Serial.println("White");
             rightForwards();
             analogWrite(6,50);
             delay(10);
-          }   
-        }
-      }else if (walldist < 120){
-        state = DEAD_END;
-        break;
+          }
+          break;   
+        } 
       }
-    
+
+      
+
+
+      
       num = (w1*x1 + w2*x2 + w3*x3 + w4*x4);
       den = (w1 + w2 + w3 + w4);
       linedist = num/den;
@@ -314,7 +276,7 @@ void loop() {
       analogWrite(5,pwml); // left motor
       analogWrite(6,pwmr); // right motor
     break;
-  }
+  }  
 }
 
 
